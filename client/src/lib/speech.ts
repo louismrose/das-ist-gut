@@ -13,11 +13,13 @@ export function speakGerman(text: string): void {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "de-DE";
   utterance.rate = 0.9;
-  // Prefer an explicitly German voice when the list has loaded; otherwise
-  // the lang hint above lets the browser pick one.
-  const germanVoice = window.speechSynthesis
-    .getVoices()
-    .find((voice) => voice.lang.replace("_", "-").toLowerCase().startsWith("de"));
+  // Prefer Anna (iOS/macOS's good German voice), then any German voice.
+  // With no match, the lang hint above lets the browser pick one.
+  const voices = window.speechSynthesis.getVoices();
+  const isGerman = (voice: SpeechSynthesisVoice) =>
+    voice.lang.replace("_", "-").toLowerCase().startsWith("de");
+  const germanVoice =
+    voices.find((voice) => isGerman(voice) && voice.name.includes("Anna")) ?? voices.find(isGerman);
   if (germanVoice) utterance.voice = germanVoice;
   window.speechSynthesis.speak(utterance);
 }
