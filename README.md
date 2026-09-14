@@ -1,9 +1,19 @@
 # Das ist gut!
 
 A small self-hosted German vocabulary practice app for use on a home network.
-Pick a vocabulary set, choose a direction (English → German, German → English, or
-mixed), and type the answers. Scores live only in the browser session — there is
-no database, no accounts, and nothing to maintain.
+Pick a vocabulary set, choose a quiz mode, and type the answers. Scores live
+only in the browser session — there is no database, no accounts, and nothing to
+maintain.
+
+Four quiz modes:
+
+- **English → German** — type the German translation (articles included);
+- **German → English** — type the English translation;
+- **Listen → German** — hear the German word and type its spelling;
+- **Listen → English** — hear the German word and type the English translation.
+
+The listening modes (and the 🔊 pronunciation buttons) use the browser's
+built-in speech synthesis and are hidden on browsers without it.
 
 ## How it works
 

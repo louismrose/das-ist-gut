@@ -47,7 +47,7 @@ describe("buildQuiz", () => {
       const item = items.find((i) => i.english === question.prompt);
       expect(item).toBeDefined();
       expect(question.expectedAnswer).toBe(item?.german);
-      expect(question.direction).toBe("en-to-de");
+      expect(question.mode).toBe("en-to-de");
     }
   });
 
@@ -56,21 +56,25 @@ describe("buildQuiz", () => {
       const item = items.find((i) => i.german === question.prompt);
       expect(item).toBeDefined();
       expect(question.expectedAnswer).toBe(item?.english);
-      expect(question.direction).toBe("de-to-en");
+      expect(question.mode).toBe("de-to-en");
     }
   });
 
-  it("uses both directions in mixed mode", () => {
-    // 0.9 → j stays put during shuffle; alternating direction draws below/above 0.5.
-    const quiz = buildQuiz(items, "mixed", fakeRandom([0.9, 0.1, 0.9, 0.6]));
-    const directions = new Set(quiz.map((q) => q.direction));
-    expect(directions).toEqual(new Set(["en-to-de", "de-to-en"]));
-    for (const question of quiz) {
-      const pair =
-        question.direction === "en-to-de"
-          ? items.find((i) => i.english === question.prompt)?.german
-          : items.find((i) => i.german === question.prompt)?.english;
-      expect(question.expectedAnswer).toBe(pair);
+  it("speaks German and expects the German spelling for audio-to-de", () => {
+    for (const question of buildQuiz(items, "audio-to-de")) {
+      const item = items.find((i) => i.german === question.prompt);
+      expect(item).toBeDefined();
+      expect(question.expectedAnswer).toBe(item?.german);
+      expect(question.mode).toBe("audio-to-de");
+    }
+  });
+
+  it("speaks German and expects the English translation for audio-to-en", () => {
+    for (const question of buildQuiz(items, "audio-to-en")) {
+      const item = items.find((i) => i.german === question.prompt);
+      expect(item).toBeDefined();
+      expect(question.expectedAnswer).toBe(item?.english);
+      expect(question.mode).toBe("audio-to-en");
     }
   });
 });

@@ -1,19 +1,30 @@
 import type { VocabularyItem } from "../../../shared/types";
 
-export type QuizDirection = "en-to-de" | "de-to-en";
-export type QuizMode = QuizDirection | "mixed";
+export type QuizMode = "en-to-de" | "de-to-en" | "audio-to-de" | "audio-to-en";
 
 export interface QuizQuestion {
+  mode: QuizMode;
+  /** The word shown to the learner — or, in audio modes, spoken aloud (always German there). */
   prompt: string;
   expectedAnswer: string;
-  direction: QuizDirection;
 }
 
 export const MODE_LABELS: Record<QuizMode, string> = {
   "en-to-de": "English → German",
   "de-to-en": "German → English",
-  mixed: "Mixed",
+  "audio-to-de": "Listen → German",
+  "audio-to-en": "Listen → English",
 };
+
+/** Audio modes speak the German word aloud instead of showing a written prompt. */
+export function isAudioMode(mode: QuizMode): boolean {
+  return mode === "audio-to-de" || mode === "audio-to-en";
+}
+
+/** The language the learner types their answer in. */
+export function answerLanguage(mode: QuizMode): "de" | "en" {
+  return mode === "en-to-de" || mode === "audio-to-de" ? "de" : "en";
+}
 
 /** Fisher–Yates shuffle. Returns a new array; `random` is injectable for tests. */
 export function shuffle<T>(items: readonly T[], random: () => number = Math.random): T[] {
@@ -27,17 +38,15 @@ export function shuffle<T>(items: readonly T[], random: () => number = Math.rand
   return result;
 }
 
-/** Builds a shuffled quiz over all items. In mixed mode each question gets a random direction. */
+/** Builds a shuffled quiz over all items for the given mode. */
 export function buildQuiz(
   items: readonly VocabularyItem[],
   mode: QuizMode,
   random: () => number = Math.random,
 ): QuizQuestion[] {
-  return shuffle(items, random).map((item) => {
-    const direction: QuizDirection =
-      mode === "mixed" ? (random() < 0.5 ? "en-to-de" : "de-to-en") : mode;
-    return direction === "en-to-de"
-      ? { prompt: item.english, expectedAnswer: item.german, direction }
-      : { prompt: item.german, expectedAnswer: item.english, direction };
-  });
+  return shuffle(items, random).map((item) => ({
+    mode,
+    prompt: mode === "en-to-de" ? item.english : item.german,
+    expectedAnswer: answerLanguage(mode) === "de" ? item.german : item.english,
+  }));
 }

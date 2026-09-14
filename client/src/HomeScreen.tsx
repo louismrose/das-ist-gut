@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import type { VocabularySetSummary } from "../../shared/types";
 import { fetchSets } from "./api";
-import { MODE_LABELS, type QuizMode } from "./lib/quiz";
+import { isAudioMode, MODE_LABELS, type QuizMode } from "./lib/quiz";
+import { speechSupported } from "./lib/speech";
 
 interface HomeScreenProps {
   onStart: (setId: string, mode: QuizMode) => void;
 }
 
-const MODES: QuizMode[] = ["en-to-de", "de-to-en", "mixed"];
+const MODES: QuizMode[] = ["en-to-de", "de-to-en", "audio-to-de", "audio-to-en"];
 
 export function HomeScreen({ onStart }: HomeScreenProps) {
   const [sets, setSets] = useState<VocabularySetSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Listening modes need the Web Speech API; hide them where it is missing.
+  const modes = speechSupported() ? MODES : MODES.filter((mode) => !isAudioMode(mode));
 
   useEffect(() => {
     fetchSets()
@@ -39,7 +42,7 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
             {set.itemCount} {set.itemCount === 1 ? "word" : "words"}
           </p>
           <div className="mode-buttons">
-            {MODES.map((mode) => (
+            {modes.map((mode) => (
               <button key={mode} type="button" onClick={() => onStart(set.id, mode)}>
                 {MODE_LABELS[mode]}
               </button>

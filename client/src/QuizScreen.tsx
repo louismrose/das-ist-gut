@@ -4,7 +4,14 @@ import { flushSync } from "react-dom";
 import type { VocabularySet } from "../../shared/types";
 import { isAnswerCorrect } from "../../shared/answers";
 import { fetchSet } from "./api";
-import { buildQuiz, MODE_LABELS, type QuizMode, type QuizQuestion } from "./lib/quiz";
+import {
+  answerLanguage,
+  buildQuiz,
+  isAudioMode,
+  MODE_LABELS,
+  type QuizMode,
+  type QuizQuestion,
+} from "./lib/quiz";
 import { speakGerman, speechSupported } from "./lib/speech";
 
 interface QuizScreenProps {
@@ -21,6 +28,13 @@ interface QuestionResult {
 
 /** Characters that are awkward to type on a non-German keyboard. */
 const GERMAN_CHARS = ["ä", "ö", "ü", "ß"];
+
+const PROMPT_LABELS: Record<QuizMode, string> = {
+  "en-to-de": "Translate this English word into German:",
+  "de-to-en": "Translate this German word into English:",
+  "audio-to-de": "Listen, then type the German word you hear:",
+  "audio-to-en": "Listen, then type the English translation:",
+};
 
 export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
   const [set, setSet] = useState<VocabularySet | null>(null);
@@ -47,6 +61,15 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
       cancelled = true;
     };
   }, [setId, mode]);
+
+  // Speak each new audio question. Browsers may block the very first
+  // utterance outside a tap; the play button below always works.
+  useEffect(() => {
+    const current = questions[index];
+    if (current && isAudioMode(current.mode)) {
+      speakGerman(current.prompt);
+    }
+  }, [questions, index]);
 
   function restart() {
     if (set === null) return;
@@ -117,9 +140,8 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
   }
 
   const question = questions[index]!;
-  const lastResult = checked ? results[results.length - 1] : undefined;
-  const promptLanguage = question.direction === "en-to-de" ? "English" : "German";
-  const answerLanguage = question.direction === "en-to-de" ? "German" : "English";
+  const answerLang = answerLanguage(question.mode);
+  const answerLanguageName = answerLang === "de" ? "German" : "English";
 
   return (
     <div className="card quiz-card">
@@ -135,13 +157,23 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
         </span>
       </div>
 
-      <p className="prompt-label">
-        Translate this {promptLanguage} word into {answerLanguage}:
-      </p>
-      <p className="prompt" lang={question.direction === "en-to-de" ? "en" : "de"}>
-        {question.prompt}
-        {question.direction === "de-to-en" && <SpeakerButton text={question.prompt} />}
-      </p>
+      <p className="prompt-label">{PROMPT_LABELS[question.mode]}</p>
+      {isAudioMode(question.mode) ? (
+        <div className="audio-prompt">
+          <button
+            type="button"
+            className="play-button"
+            onClick={() => speakGerman(question.prompt)}
+          >
+            🔊 Play word
+          </button>
+        </div>
+      ) : (
+        <p className="prompt" lang={question.mode === "en-to-de" ? "en" : "de"}>
+          {question.prompt}
+          {question.mode === "de-to-en" && <SpeakerButton text={question.prompt} />}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
         <input
@@ -151,17 +183,17 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
           value={entered}
           onChange={(event) => setEntered(event.target.value)}
           readOnly={checked}
-          placeholder={`Type the ${answerLanguage} answer…`}
+          placeholder={`Type the ${answerLanguageName} answer…`}
           autoFocus
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
-          lang={question.direction === "en-to-de" ? "de" : "en"}
-          aria-label={`${answerLanguage} answer`}
+          lang={answerLang}
+          aria-label={`${answerLanguageName} answer`}
         />
 
-        {!checked && question.direction === "en-to-de" && (
+        {!checked && answerLang === "de" && (
           <div className="char-buttons" aria-label="German characters">
             {GERMAN_CHARS.map((character) => (
               <button key={character} type="button" onClick={() => insertCharacter(character)}>
@@ -171,19 +203,21 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
           </div>
         )}
 
-        {lastResult &&
-          (lastResult.correct ? (
+        {checked && question.mode === "audio-to-en" && (
+          <p className="feedback feedback-neutral">
+            You heard: <strong lang="de">{question.prompt}</strong>
+            <SpeakerButton text={question.prompt} />
+          </p>
+        )}
+
+        {checked &&
+          (results[results.length - 1]?.correct ? (
             <p className="feedback feedback-correct">✓ Richtig!</p>
           ) : (
             <p className="feedback feedback-incorrect">
               ✗ Not quite. The correct answer is{" "}
-              <strong lang={question.direction === "en-to-de" ? "de" : "en"}>
-                {question.expectedAnswer}
-              </strong>
-              .
-              {question.direction === "en-to-de" && (
-                <SpeakerButton text={question.expectedAnswer} />
-              )}
+              <strong lang={answerLang}>{question.expectedAnswer}</strong>.
+              {answerLang === "de" && <SpeakerButton text={question.expectedAnswer} />}
             </p>
           ))}
 
@@ -245,25 +279,39 @@ function QuizSummary({ setName, results, onRetry, onExit }: QuizSummaryProps) {
         <div className="review">
           <h3>Words to review</h3>
           <ul className="review-list">
-            {incorrect.map((result, reviewIndex) => (
-              <li key={reviewIndex}>
-                <span className="review-prompt">
-                  {result.question.prompt}
-                  {result.question.direction === "de-to-en" && (
-                    <SpeakerButton text={result.question.prompt} />
+            {incorrect.map((result, reviewIndex) => {
+              const question = result.question;
+              return (
+                <li key={reviewIndex}>
+                  {question.mode === "audio-to-de" ? (
+                    // Prompt and answer are the same German word; show it once.
+                    <span className="review-prompt" lang="de">
+                      {question.expectedAnswer}
+                      <SpeakerButton text={question.expectedAnswer} />
+                    </span>
+                  ) : (
+                    <>
+                      <span
+                        className="review-prompt"
+                        lang={question.mode === "en-to-de" ? "en" : "de"}
+                      >
+                        {question.prompt}
+                        {question.mode !== "en-to-de" && <SpeakerButton text={question.prompt} />}
+                      </span>
+                      <span className="review-answer" lang={answerLanguage(question.mode)}>
+                        {question.expectedAnswer}
+                        {question.mode === "en-to-de" && (
+                          <SpeakerButton text={question.expectedAnswer} />
+                        )}
+                      </span>
+                    </>
                   )}
-                </span>
-                <span className="review-answer">
-                  {result.question.expectedAnswer}
-                  {result.question.direction === "en-to-de" && (
-                    <SpeakerButton text={result.question.expectedAnswer} />
+                  {result.entered.trim() !== "" && (
+                    <span className="review-entered">you wrote: {result.entered}</span>
                   )}
-                </span>
-                {result.entered.trim() !== "" && (
-                  <span className="review-entered">you wrote: {result.entered}</span>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
