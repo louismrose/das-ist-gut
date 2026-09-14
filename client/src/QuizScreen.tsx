@@ -29,6 +29,29 @@ interface QuestionResult {
 /** Characters that are awkward to type on a non-German keyboard. */
 const GERMAN_CHARS = ["ä", "ö", "ü", "ß"];
 
+type AnswerPhase = "answering" | "correct" | "incorrect";
+
+/** Short German praise shown for a correct answer. */
+const PRAISE = [
+  "Richtig!",
+  "Super!",
+  "Toll!",
+  "Prima!",
+  "Klasse!",
+  "Spitze!",
+  "Genau!",
+  "Wunderbar!",
+  "Sehr gut!",
+];
+const PRAISE_EMOJI = ["🎉", "⭐", "🌟", "🎊", "✨", "🚀", "💪"];
+
+/** How long the celebration shows before auto-advancing to the next question. */
+const CELEBRATION_MS = 1200;
+
+function pick<T>(values: readonly T[]): T {
+  return values[Math.floor(Math.random() * values.length)]!;
+}
+
 const PROMPT_LABELS: Record<QuizMode, string> = {
   "en-to-de": "Translate this English word into German:",
   "de-to-en": "Translate this German word into English:",
@@ -43,7 +66,8 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [entered, setEntered] = useState("");
-  const [checked, setChecked] = useState(false);
+  const [phase, setPhase] = useState<AnswerPhase>("answering");
+  const [praise, setPraise] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,38 +95,62 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
     }
   }, [questions, index]);
 
+  // Auto-advance once the celebration for a correct answer has played. The
+  // input stays editable and focused throughout, so the mobile keyboard
+  // survives the transition without any focus tricks.
+  useEffect(() => {
+    if (phase !== "correct") return;
+    const timer = setTimeout(() => {
+      setEntered("");
+      setIndex((previous) => previous + 1);
+      setPhase("answering");
+    }, CELEBRATION_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
   function restart() {
     if (set === null) return;
     setQuestions(buildQuiz(set.items, mode));
     setIndex(0);
     setResults([]);
     setEntered("");
-    setChecked(false);
+    setPhase("answering");
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const question = questions[index];
     if (!question) return;
-    if (!checked) {
-      setResults((previous) => [
-        ...previous,
-        {
-          question,
-          entered,
-          correct: isAnswerCorrect(entered, question.expectedAnswer, answerLanguage(question.mode)),
-        },
-      ]);
-      setChecked(true);
+    if (phase === "answering") {
+      // `required` on the input blocks empty submissions; this also blocks
+      // whitespace-only ones.
+      if (entered.trim() === "") return;
+      const correct = isAnswerCorrect(
+        entered,
+        question.expectedAnswer,
+        answerLanguage(question.mode),
+      );
+      setResults((previous) => [...previous, { question, entered, correct }]);
+      if (correct) {
+        setPraise(`${pick(PRAISE_EMOJI)} ${pick(PRAISE)}`);
+        setPhase("correct");
+      } else {
+        setPhase("incorrect");
+      }
+    } else if (phase === "correct") {
+      // Enter (or the button) skips the celebration delay.
+      setEntered("");
+      setIndex((previous) => previous + 1);
+      setPhase("answering");
     } else {
       // Flush synchronously so readOnly is removed from the DOM before the
       // focus call below — iOS only shows the keyboard when an editable input
       // is focused inside the user gesture. The blur forces a fresh focus
       // event even if the input never lost DOM focus.
       flushSync(() => {
-        setChecked(false);
         setEntered("");
         setIndex((previous) => previous + 1);
+        setPhase("answering");
       });
       const input = inputRef.current;
       if (input) {
@@ -115,7 +163,7 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
   /** Inserts ä/ö/ü/ß at the caret without losing focus. */
   function insertCharacter(character: string) {
     const input = inputRef.current;
-    if (input === null || checked) return;
+    if (input === null || phase !== "answering") return;
     const start = input.selectionStart ?? entered.length;
     const end = input.selectionEnd ?? entered.length;
     setEntered(entered.slice(0, start) + character + entered.slice(end));
@@ -186,7 +234,8 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
           type="text"
           value={entered}
           onChange={(event) => setEntered(event.target.value)}
-          readOnly={checked}
+          readOnly={phase === "incorrect"}
+          required={phase === "answering"}
           placeholder={`Type the ${answerLanguageName} answer…`}
           autoFocus
           autoComplete="off"
@@ -197,7 +246,7 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
           aria-label={`${answerLanguageName} answer`}
         />
 
-        {!checked && answerLang === "de" && (
+        {phase === "answering" && answerLang === "de" && (
           <div className="char-buttons" aria-label="German characters">
             {GERMAN_CHARS.map((character) => (
               <button key={character} type="button" onClick={() => insertCharacter(character)}>
@@ -207,26 +256,32 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
           </div>
         )}
 
-        {checked && question.mode === "audio-to-en" && (
+        {phase !== "answering" && question.mode === "audio-to-en" && (
           <p className="feedback feedback-neutral">
             You heard: <strong lang="de">{question.prompt}</strong>
             <SpeakerButton text={question.prompt} />
           </p>
         )}
 
-        {checked &&
-          (results[results.length - 1]?.correct ? (
-            <p className="feedback feedback-correct">✓ Richtig!</p>
-          ) : (
-            <p className="feedback feedback-incorrect">
-              ✗ Not quite. The correct answer is{" "}
-              <strong lang={answerLang}>{question.expectedAnswer}</strong>.
-              {answerLang === "de" && <SpeakerButton text={question.expectedAnswer} />}
-            </p>
-          ))}
+        {phase === "correct" && (
+          <p className="feedback feedback-correct celebration" aria-live="polite">
+            {praise}
+          </p>
+        )}
+        {phase === "incorrect" && (
+          <p className="feedback feedback-incorrect">
+            ✗ Not quite. The correct answer is{" "}
+            <strong lang={answerLang}>{question.expectedAnswer}</strong>.
+            {answerLang === "de" && <SpeakerButton text={question.expectedAnswer} />}
+          </p>
+        )}
 
         <button type="submit" className="primary submit-button">
-          {checked ? (index + 1 < questions.length ? "Next question" : "See results") : "Check"}
+          {phase === "answering"
+            ? "Check"
+            : index + 1 < questions.length
+              ? "Next question"
+              : "See results"}
         </button>
       </form>
     </div>

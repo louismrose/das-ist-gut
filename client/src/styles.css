@@ -243,6 +243,25 @@ button.primary:hover {
   color: var(--correct);
 }
 
+.celebration {
+  text-align: center;
+  font-size: 1.25rem;
+  animation: celebrate-pop 0.45s ease;
+}
+
+@keyframes celebrate-pop {
+  0% {
+    transform: scale(0.4) rotate(-4deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
 .feedback-incorrect {
   background: var(--incorrect-bg);
   color: var(--incorrect);
