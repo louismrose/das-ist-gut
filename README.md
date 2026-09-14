@@ -26,7 +26,10 @@ built-in speech synthesis and are hidden on browsers without it.
 
 Answers are compared case-insensitively with surrounding whitespace ignored, but
 German spelling is otherwise significant: `a` does not match `ä`, and `ss` does
-not match `ß`. The rules live in one place, `shared/answers.ts`.
+not match `ß`. An answer that is entirely a number may be written as digits or
+as the number word in the answer's language (`8` ↔ `eight`, or `8` ↔ `acht`
+when the answer should be German), covering 0–20, the tens, and 100. The rules
+live in one place, `shared/answers.ts`.
 
 ## Running locally (development)
 

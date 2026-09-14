@@ -87,7 +87,11 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
     if (!checked) {
       setResults((previous) => [
         ...previous,
-        { question, entered, correct: isAnswerCorrect(entered, question.expectedAnswer) },
+        {
+          question,
+          entered,
+          correct: isAnswerCorrect(entered, question.expectedAnswer, answerLanguage(question.mode)),
+        },
       ]);
       setChecked(true);
     } else {

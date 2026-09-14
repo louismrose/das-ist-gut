@@ -65,3 +65,41 @@ describe("isAnswerCorrect", () => {
     expect(isAnswerCorrect("toilets", "the toilets")).toBe(false);
   });
 });
+
+describe("isAnswerCorrect with numbers", () => {
+  it("accepts digits for an English number word and vice versa", () => {
+    expect(isAnswerCorrect("8", "eight", "en")).toBe(true);
+    expect(isAnswerCorrect("thirteen", "13", "en")).toBe(true);
+    expect(isAnswerCorrect("Twenty", "20", "en")).toBe(true);
+  });
+
+  it("accepts digits for a German number word and vice versa", () => {
+    expect(isAnswerCorrect("8", "acht", "de")).toBe(true);
+    expect(isAnswerCorrect("fünfzehn", "15", "de")).toBe(true);
+    expect(isAnswerCorrect("dreißig", "30", "de")).toBe(true);
+  });
+
+  it("does not accept a number word from the wrong language", () => {
+    expect(isAnswerCorrect("dreizehn", "13", "en")).toBe(false);
+    expect(isAnswerCorrect("acht", "eight", "en")).toBe(false);
+    expect(isAnswerCorrect("eight", "acht", "de")).toBe(false);
+  });
+
+  it("still requires correct German number spelling", () => {
+    expect(isAnswerCorrect("funfzehn", "fünfzehn", "de")).toBe(false);
+    expect(isAnswerCorrect("dreissig", "dreißig", "de")).toBe(false);
+  });
+
+  it("rejects the wrong number", () => {
+    expect(isAnswerCorrect("9", "eight", "en")).toBe(false);
+    expect(isAnswerCorrect("nine", "8", "en")).toBe(false);
+  });
+
+  it("only applies to whole answers, not numbers inside phrases", () => {
+    expect(isAnswerCorrect("8 ball", "eight ball", "en")).toBe(false);
+  });
+
+  it("does not apply number equivalence without a language", () => {
+    expect(isAnswerCorrect("8", "eight")).toBe(false);
+  });
+});
