@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { flushSync } from "react-dom";
 import type { VocabularySet } from "../../shared/types";
 import { isAnswerCorrect } from "../../shared/answers";
 import { fetchSet } from "./api";
@@ -66,10 +67,20 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
       ]);
       setChecked(true);
     } else {
-      setChecked(false);
-      setEntered("");
-      setIndex((previous) => previous + 1);
-      inputRef.current?.focus();
+      // Flush synchronously so readOnly is removed from the DOM before the
+      // focus call below — iOS only shows the keyboard when an editable input
+      // is focused inside the user gesture. The blur forces a fresh focus
+      // event even if the input never lost DOM focus.
+      flushSync(() => {
+        setChecked(false);
+        setEntered("");
+        setIndex((previous) => previous + 1);
+      });
+      const input = inputRef.current;
+      if (input) {
+        input.blur();
+        input.focus();
+      }
     }
   }
 
