@@ -1,0 +1,10 @@
+services:
+  das-ist-gut:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Edit data/vocabulary.json on the host and refresh the browser —
+      # no rebuild needed. Remove this mount to bake the vocabulary in.
+      - ./data:/app/data:ro
+    restart: unless-stopped

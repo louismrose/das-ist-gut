@@ -1,0 +1,54 @@
+{
+  "sets": [
+    {
+      "id": "set-1",
+      "name": "Set 1: Basics",
+      "items": [
+        { "english": "seven", "german": "sieben" },
+        { "english": "grey", "german": "grau" },
+        { "english": "red", "german": "rot" },
+        { "english": "brother", "german": "Bruder" },
+        { "english": "sister", "german": "Schwester" },
+        { "english": "father", "german": "Vater" },
+        { "english": "fifteen", "german": "fünfzehn" },
+        { "english": "black", "german": "schwarz" },
+        { "english": "13", "german": "dreizehn" },
+        { "english": "football", "german": "Fußball" },
+        { "english": "family", "german": "Familie" },
+        { "english": "green", "german": "grün" },
+        { "english": "white", "german": "weiß" },
+        { "english": "yellow", "german": "gelb" },
+        { "english": "uncle", "german": "Onkel" },
+        { "english": "German", "german": "Deutsch" },
+        { "english": "mother", "german": "Mutter" },
+        { "english": "20", "german": "zwanzig" },
+        { "english": "I", "german": "ich" },
+        { "english": "have", "german": "habe" },
+        { "english": "teacher", "german": "Lehrer" },
+        { "english": "the toilets", "german": "Toiletten" },
+        { "english": "dog", "german": "Hund" },
+        { "english": "cat", "german": "Katze" },
+        { "english": "purple", "german": "lila" },
+        { "english": "exercise book", "german": "Heft" },
+        { "english": "book", "german": "Buch" },
+        { "english": "nine", "german": "neun" },
+        { "english": "four", "german": "vier" },
+        { "english": "eight", "german": "acht" }
+      ]
+    },
+    {
+      "id": "animals-with-articles",
+      "name": "Animals (with articles)",
+      "items": [
+        { "english": "dog", "german": "der Hund" },
+        { "english": "cat", "german": "die Katze" },
+        { "english": "horse", "german": "das Pferd" },
+        { "english": "bird", "german": "der Vogel" },
+        { "english": "mouse", "german": "die Maus" },
+        { "english": "bear", "german": "der Bär" },
+        { "english": "fish", "german": "der Fisch" },
+        { "english": "rabbit", "german": "das Kaninchen" }
+      ]
+    }
+  ]
+}
