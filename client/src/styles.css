@@ -187,6 +187,21 @@ button.primary:hover {
   outline-offset: 1px;
 }
 
+.speaker-button {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-left: 0.35em;
+  font-size: 0.7em;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.speaker-button:hover {
+  transform: scale(1.15);
+}
+
 .char-buttons {
   display: flex;
   gap: 0.5rem;

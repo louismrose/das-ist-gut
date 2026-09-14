@@ -5,6 +5,7 @@ import type { VocabularySet } from "../../shared/types";
 import { isAnswerCorrect } from "../../shared/answers";
 import { fetchSet } from "./api";
 import { buildQuiz, MODE_LABELS, type QuizMode, type QuizQuestion } from "./lib/quiz";
+import { speakGerman, speechSupported } from "./lib/speech";
 
 interface QuizScreenProps {
   setId: string;
@@ -139,6 +140,7 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
       </p>
       <p className="prompt" lang={question.direction === "en-to-de" ? "en" : "de"}>
         {question.prompt}
+        {question.direction === "de-to-en" && <SpeakerButton text={question.prompt} />}
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -179,6 +181,9 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
                 {question.expectedAnswer}
               </strong>
               .
+              {question.direction === "en-to-de" && (
+                <SpeakerButton text={question.expectedAnswer} />
+              )}
             </p>
           ))}
 
@@ -187,6 +192,22 @@ export function QuizScreen({ setId, mode, onExit }: QuizScreenProps) {
         </button>
       </form>
     </div>
+  );
+}
+
+/** Speaks a German word aloud. Renders nothing if the browser has no speech support. */
+function SpeakerButton({ text }: { text: string }) {
+  if (!speechSupported()) return null;
+  return (
+    <button
+      type="button"
+      className="speaker-button"
+      onClick={() => speakGerman(text)}
+      aria-label={`Pronounce “${text}”`}
+      title="Pronounce"
+    >
+      🔊
+    </button>
   );
 }
 
@@ -226,8 +247,18 @@ function QuizSummary({ setName, results, onRetry, onExit }: QuizSummaryProps) {
           <ul className="review-list">
             {incorrect.map((result, reviewIndex) => (
               <li key={reviewIndex}>
-                <span className="review-prompt">{result.question.prompt}</span>
-                <span className="review-answer">{result.question.expectedAnswer}</span>
+                <span className="review-prompt">
+                  {result.question.prompt}
+                  {result.question.direction === "de-to-en" && (
+                    <SpeakerButton text={result.question.prompt} />
+                  )}
+                </span>
+                <span className="review-answer">
+                  {result.question.expectedAnswer}
+                  {result.question.direction === "en-to-de" && (
+                    <SpeakerButton text={result.question.expectedAnswer} />
+                  )}
+                </span>
                 {result.entered.trim() !== "" && (
                   <span className="review-entered">you wrote: {result.entered}</span>
                 )}
