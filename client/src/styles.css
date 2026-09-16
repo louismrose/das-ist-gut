@@ -103,6 +103,12 @@ body {
   gap: 0.5rem;
 }
 
+/* Emoji-only labels; a touch larger so the flags read clearly. */
+.mode-buttons button {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 button {
   font: inherit;
   padding: 0.5rem 0.9rem;

@@ -16,6 +16,14 @@ export const MODE_LABELS: Record<QuizMode, string> = {
   "audio-to-en": "Listen → English",
 };
 
+/** Compact emoji version of MODE_LABELS for the mode buttons. */
+export const MODE_ICONS: Record<QuizMode, string> = {
+  "en-to-de": "🇬🇧 → 🇩🇪",
+  "de-to-en": "🇩🇪 → 🇬🇧",
+  "audio-to-de": "🔈 → 🇩🇪",
+  "audio-to-en": "🔈 → 🇬🇧",
+};
+
 /** Audio modes speak the German word aloud instead of showing a written prompt. */
 export function isAudioMode(mode: QuizMode): boolean {
   return mode === "audio-to-de" || mode === "audio-to-en";

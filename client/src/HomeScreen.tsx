@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { VocabularySetSummary } from "../../shared/types";
 import { fetchSets } from "./api";
-import { isAudioMode, MODE_LABELS, type QuizMode } from "./lib/quiz";
+import { isAudioMode, MODE_ICONS, MODE_LABELS, type QuizMode } from "./lib/quiz";
 import { speechSupported } from "./lib/speech";
 
 interface HomeScreenProps {
@@ -43,8 +43,14 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
           </p>
           <div className="mode-buttons">
             {modes.map((mode) => (
-              <button key={mode} type="button" onClick={() => onStart(set.id, mode)}>
-                {MODE_LABELS[mode]}
+              <button
+                key={mode}
+                type="button"
+                onClick={() => onStart(set.id, mode)}
+                aria-label={MODE_LABELS[mode]}
+                title={MODE_LABELS[mode]}
+              >
+                {MODE_ICONS[mode]}
               </button>
             ))}
           </div>
