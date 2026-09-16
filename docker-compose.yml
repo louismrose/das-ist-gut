@@ -1,6 +1,10 @@
 services:
   das-ist-gut:
-    build: .
+    build:
+      context: .
+      args:
+        # Build with: GIT_SHA=$(git rev-parse --short HEAD) docker compose build
+        GIT_SHA: ${GIT_SHA:-unknown}
     ports:
       - "3000:3000"
     volumes:

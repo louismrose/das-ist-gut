@@ -3,9 +3,13 @@ import type { NextFunction, Request, Response } from "express";
 import type { VocabularyRepository } from "./vocabularyRepository.js";
 
 /** Creates the Express app with the API routes. Static file serving is wired up in index.ts. */
-export function createApp(repository: VocabularyRepository): express.Express {
+export function createApp(repository: VocabularyRepository, version = "dev"): express.Express {
   const app = express();
   app.disable("x-powered-by");
+
+  app.get("/api/version", (_req, res) => {
+    res.json({ version });
+  });
 
   app.get("/api/sets", async (_req, res) => {
     res.json(await repository.getSets());

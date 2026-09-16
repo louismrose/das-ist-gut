@@ -56,6 +56,13 @@ body {
   color: var(--text-muted);
 }
 
+.app-footer {
+  margin: 2rem 0 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
 .status {
   text-align: center;
   color: var(--text-muted);

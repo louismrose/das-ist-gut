@@ -8,8 +8,11 @@ import { ConfigVocabularyRepository } from "./configVocabularyRepository.js";
 const port = Number(process.env.PORT ?? 3000);
 const vocabularyFile = process.env.VOCABULARY_FILE ?? path.resolve("data/vocabulary.json");
 
+// Baked into the Docker image at build time (see Dockerfile's GIT_SHA arg).
+const version = process.env.GIT_SHA ?? "dev";
+
 const repository = new ConfigVocabularyRepository(vocabularyFile);
-const app = createApp(repository);
+const app = createApp(repository, version);
 
 // In production the built React app lives next to the compiled server (dist/client).
 // In development Vite serves the frontend instead, so this block is skipped.
@@ -30,5 +33,5 @@ const sets = await repository.getSets();
 console.log(`Loaded ${sets.length} vocabulary set(s) from ${vocabularyFile}`);
 
 app.listen(port, () => {
-  console.log(`Das ist gut! Listening on http://localhost:${port}`);
+  console.log(`Das ist gut! (${version}) Listening on http://localhost:${port}`);
 });
