@@ -20,3 +20,18 @@ export interface VocabularySet {
   name: string;
   items: VocabularyItem[];
 }
+
+/** The signed-in user. */
+export interface CurrentUser {
+  /** Stable unique identifier: the OIDC `sub` claim. */
+  id: string;
+  name: string;
+  email?: string;
+}
+
+/** The browser's authenticated session, as returned by `GET /api/me`. */
+export interface CurrentSession {
+  user: CurrentUser;
+  /** Where to send the browser to log out, or null when authentication is disabled. */
+  logoutUrl: string | null;
+}

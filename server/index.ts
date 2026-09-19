@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createApp } from "./app.js";
+import { loadAuthConfig } from "./auth.js";
 import { ConfigVocabularyRepository } from "./configVocabularyRepository.js";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -11,8 +12,14 @@ const vocabularyFile = process.env.VOCABULARY_FILE ?? path.resolve("data/vocabul
 // Baked into the Docker image at build time (see Dockerfile's GIT_SHA arg).
 const version = process.env.GIT_SHA ?? "dev";
 
+// Throws (and so refuses to start) if the OIDC settings are incomplete.
+const authConfig = loadAuthConfig(process.env);
+if (authConfig.mode === "disabled") {
+  console.warn("WARNING: AUTH_DISABLED=true, so authentication is OFF. Development only!");
+}
+
 const repository = new ConfigVocabularyRepository(vocabularyFile);
-const app = createApp(repository, version);
+const app = createApp(repository, authConfig, version);
 
 // In production the built React app lives next to the compiled server (dist/client).
 // In development Vite serves the frontend instead, so this block is skipped.

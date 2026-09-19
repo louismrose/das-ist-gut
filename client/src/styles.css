@@ -63,6 +63,14 @@ body {
   font-size: 0.75rem;
 }
 
+.app-footer p {
+  margin: 0.25rem 0;
+}
+
+.app-footer a {
+  color: inherit;
+}
+
 .status {
   text-align: center;
   color: var(--text-muted);

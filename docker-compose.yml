@@ -7,6 +7,9 @@ services:
         GIT_SHA: ${GIT_SHA:-unknown}
     ports:
       - "3000:3000"
+    # OIDC settings (see .env.example). The image runs with NODE_ENV=production,
+    # so it refuses to start without them.
+    env_file: .env
     volumes:
       # Edit data/vocabulary.json on the host and refresh the browser —
       # no rebuild needed. Remove this mount to bake the vocabulary in.

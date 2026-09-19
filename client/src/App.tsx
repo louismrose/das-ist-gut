@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchVersion } from "./api";
+import type { CurrentSession } from "../../shared/types";
+import { fetchSession, fetchVersion } from "./api";
 import { HomeScreen } from "./HomeScreen";
 import { QuizScreen } from "./QuizScreen";
 import type { QuizMode } from "./lib/quiz";
@@ -9,12 +10,16 @@ type Route = { screen: "home" } | { screen: "quiz"; setId: string; mode: QuizMod
 export function App() {
   const [route, setRoute] = useState<Route>({ screen: "home" });
   const [version, setVersion] = useState<string | null>(null);
+  const [session, setSession] = useState<CurrentSession | null>(null);
 
-  // Purely informational; stay quiet if the endpoint is unreachable.
+  // Purely informational; stay quiet if the endpoints are unreachable.
   useEffect(() => {
     fetchVersion()
       .then(setVersion)
       .catch(() => setVersion(null));
+    fetchSession()
+      .then(setSession)
+      .catch(() => setSession(null));
   }, []);
 
   return (
@@ -43,7 +48,20 @@ export function App() {
           />
         )}
       </main>
-      {version !== null && <footer className="app-footer">version {version}</footer>}
+      <footer className="app-footer">
+        {session !== null && (
+          <p>
+            Signed in as {session.user.name}
+            {session.logoutUrl !== null && (
+              <>
+                {" · "}
+                <a href={session.logoutUrl}>Log out</a>
+              </>
+            )}
+          </p>
+        )}
+        {version !== null && <p>version {version}</p>}
+      </footer>
     </div>
   );
 }
